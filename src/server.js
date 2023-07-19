@@ -1,16 +1,17 @@
 /**
  * The core server that runs on a Cloudflare worker.
  */
-
 import { Router } from 'itty-router';
 import {
   InteractionResponseType,
   InteractionType,
   verifyKey,
 } from 'discord-interactions';
-import { AWW_COMMAND, INVITE_COMMAND } from './commands.js';
+import { AWW_COMMAND, TOMI_CHAT_COMMAND, TOMI_PERSONA_COMMAND, TOMI_RECIPE_COMMAND } from './commands.js';
 import { getCuteUrl } from './reddit.js';
 import { InteractionResponseFlags } from 'discord-interactions';
+import ChatGPT from './chatgpt.js'
+
 
 class JsonResponse extends Response {
   constructor(body, init) {
@@ -25,6 +26,7 @@ class JsonResponse extends Response {
 }
 
 const router = Router();
+let tomi;
 
 /**
  * A simple :wave: hello page to verify the worker is working.
@@ -39,6 +41,7 @@ router.get('/', (request, env) => {
  * https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object
  */
 router.post('/', async (request, env) => {
+  
   const { isValid, interaction } = await server.verifyDiscordRequest(
     request,
     env
@@ -67,14 +70,30 @@ router.post('/', async (request, env) => {
           },
         });
       }
-      case INVITE_COMMAND.name.toLowerCase(): {
-        const applicationId = env.DISCORD_APPLICATION_ID;
-        const INVITE_URL = `https://discord.com/oauth2/authorize?client_id=${applicationId}&scope=applications.commands`;
+      case TOMI_CHAT_COMMAND.name.toLowerCase(): {
+        const userText = interaction.data.options[0].value;  // Extract user's text
+        //console.info('Discord Input: ', interaction.data.options);
+        const response = await tomi.getChatResponse(userText);  // Get response from GPT-3
         return new JsonResponse({
           type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
           data: {
-            content: INVITE_URL,
-            flags: InteractionResponseFlags.EPHEMERAL,
+            content: response,  // Return the GPT-3 response
+          },
+        });
+      }
+      case TOMI_RECIPE_COMMAND.name.toLowerCase(): {
+        return new JsonResponse({
+          type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+          data: {
+            content: 'Hi, your boy chef jr here',
+          },
+        });
+      }
+      case TOMI_PERSONA_COMMAND.name.toLowerCase(): {
+        return new JsonResponse({
+          type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+          data: {
+            content: 'Hi, i now have a new personality',
           },
         });
       }
@@ -106,6 +125,7 @@ async function verifyDiscordRequest(request, env) {
 const server = {
   verifyDiscordRequest: verifyDiscordRequest,
   fetch: async function (request, env) {
+    tomi = new ChatGPT(env.OPENAI_API_KEY);
     return router.handle(request, env);
   },
 };

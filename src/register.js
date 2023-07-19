@@ -1,4 +1,4 @@
-import { AWW_COMMAND, INVITE_COMMAND } from './commands.js';
+import { AWW_COMMAND, TOMI_CHAT_COMMAND, TOMI_PERSONA_COMMAND, TOMI_RECIPE_COMMAND } from './commands.js';
 import dotenv from 'dotenv';
 import process from 'node:process';
 
@@ -34,7 +34,7 @@ const response = await fetch(url, {
     Authorization: `Bot ${token}`,
   },
   method: 'PUT',
-  body: JSON.stringify([AWW_COMMAND, INVITE_COMMAND]),
+  body: JSON.stringify([AWW_COMMAND, TOMI_CHAT_COMMAND, TOMI_RECIPE_COMMAND, TOMI_PERSONA_COMMAND]),
 });
 
 if (response.ok) {

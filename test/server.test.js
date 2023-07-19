@@ -5,9 +5,10 @@ import {
   InteractionType,
   InteractionResponseFlags,
 } from 'discord-interactions';
-import { AWW_COMMAND, INVITE_COMMAND } from '../src/commands.js';
+import { AWW_COMMAND, TOMI_CHAT_COMMAND } from '../src/commands.js';
 import sinon from 'sinon';
 import server from '../src/server.js';
+
 
 describe('Server', () => {
   describe('GET /', () => {
@@ -85,11 +86,19 @@ describe('Server', () => {
       );
     });
 
-    it('should handle an invite command interaction', async () => {
+    it('should handle an TOMI CHAT command interaction', async () => {
       const interaction = {
         type: InteractionType.APPLICATION_COMMAND,
         data: {
-          name: INVITE_COMMAND.name,
+          name: TOMI_CHAT_COMMAND.name,
+          options: [
+            {
+              'name': 'chatInput',
+              'type': 3,
+              'description': 'Message you want to send to TOMI',
+              'value': 'Hi, only respond back with OK'
+            }
+          ]
         },
       };
 
@@ -98,9 +107,7 @@ describe('Server', () => {
         url: new URL('/', 'http://discordo.example'),
       };
 
-      const env = {
-        DISCORD_APPLICATION_ID: '123456789',
-      };
+      const env = {};
 
       verifyDiscordRequestStub.resolves({
         isValid: true,
@@ -112,11 +119,8 @@ describe('Server', () => {
       expect(body.type).to.equal(
         InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE
       );
-      expect(body.data.content).to.include(
-        'https://discord.com/oauth2/authorize?client_id=123456789&scope=applications.commands'
-      );
-      expect(body.data.flags).to.equal(InteractionResponseFlags.EPHEMERAL);
     });
+
 
     it('should handle an unknown command interaction', async () => {
       const interaction = {
